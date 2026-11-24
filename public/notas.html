@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4f46e5">
+<title>Lyceum Remastered</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --card:#ffffff; --ink:#15181d; --mut:#6b7280; --line:#e8eaee;
+    --accent:#4f46e5; --accent-soft:#eef0fe; --good:#059669; --good-soft:#e7f6ef;
+    --warn:#b45309; --warn-soft:#fcf1e2; --bad:#dc2626; --bad-soft:#fdecec;
+    --radius:16px; --shadow:0 1px 2px rgba(20,24,33,.04),0 4px 16px rgba(20,24,33,.05);
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0e1116; --card:#171b22; --ink:#e8eaed; --mut:#8b929e; --line:#242a33;
+    --accent:#818cf8; --accent-soft:#1e2130; --good:#34d399; --good-soft:#12241d;
+    --warn:#fbbf24; --warn-soft:#241c10; --bad:#f87171; --bad-soft:#241314;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+  }}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:640px;margin:0 auto;padding:0 16px 48px}
+  button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  input{font:inherit}
+
+  /* ---- Login ---- */
+  #login{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .loginCard{width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:32px 26px;animation:rise .5s cubic-bezier(.2,.8,.2,1)}
+  .brand{font-size:26px;font-weight:300;letter-spacing:-.02em;margin:0 0 2px}
+  .brand b{font-weight:700}
+  .brandsub{color:var(--mut);font-size:13px;margin:0 0 26px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--mut);margin:0 0 6px;letter-spacing:.01em}
+  .field input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);transition:border-color .15s,box-shadow .15s;outline:none}
+  .field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .primary{width:100%;padding:13px;border-radius:12px;background:var(--accent);color:#fff;font-weight:600;margin-top:8px;transition:transform .08s,filter .15s}
+  .primary:active{transform:scale(.985)}
+  .primary:disabled{opacity:.6;cursor:default}
+  .err{color:var(--bad);font-size:13px;margin-top:12px;min-height:18px;text-align:center}
+  .hint{color:var(--mut);font-size:11.5px;line-height:1.5;margin-top:18px;text-align:center}
+
+  /* ---- Header ---- */
+  header{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.6) blur(12px);border-bottom:1px solid var(--line)}
+  .hwrap{max-width:640px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px}
+  .who{min-width:0;flex:1}
+  .who .n{font-weight:650;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .who .t{color:var(--mut);font-size:12px}
+  .ghost{color:var(--mut);font-size:13px;padding:7px 10px;border-radius:10px;transition:background .15s,color .15s}
+  .ghost:active,.ghost:hover{background:var(--line);color:var(--ink)}
+
+  /* ---- Controls ---- */
+  .controls{display:flex;align-items:center;gap:10px;margin:18px 0 14px;flex-wrap:wrap}
+  .seg{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:3px;gap:2px;box-shadow:var(--shadow)}
+  .seg button{padding:7px 14px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--mut);transition:color .18s,background .18s}
+  .seg button.on{background:var(--accent);color:#fff}
+  .spacer{flex:1}
+  .goal{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--mut)}
+  .goal input{width:52px;text-align:center;padding:7px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);outline:none}
+  .goal input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+
+  /* ---- Resumo ---- */
+  .summary{display:flex;gap:10px;margin-bottom:16px}
+  .stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow)}
+  .stat .v{font-size:22px;font-weight:750;letter-spacing:-.02em}
+  .stat .l{font-size:11.5px;color:var(--mut);margin-top:2px}
+
+  /* ---- Subject card ---- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;transition:border-color .15s}
+  .card.open{border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+  .head{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
+  .head .nm{flex:1;min-width:0}
+  .head .nm .d{font-weight:620;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .head .nm .p{color:var(--mut);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chip{font-size:11.5px;font-weight:650;padding:4px 9px;border-radius:999px;white-space:nowrap}
+  .chip.good{background:var(--good-soft);color:var(--good)}
+  .chip.warn{background:var(--warn-soft);color:var(--warn)}
+  .chip.bad{background:var(--bad-soft);color:var(--bad)}
+  .chip.mut{background:var(--line);color:var(--mut)}
+  .m{font-size:21px;font-weight:760;letter-spacing:-.02em;min-width:46px;text-align:right}
+  .m.good{color:var(--good)}.m.warn{color:var(--warn)}.m.bad{color:var(--bad)}.m.mut{color:var(--mut)}
+  .caret{color:var(--mut);transition:transform .25s;font-size:13px}
+  .card.open .caret{transform:rotate(90deg)}
+
+  .detail{max-height:0;overflow:hidden;transition:max-height .32s cubic-bezier(.2,.8,.2,1)}
+  .dbody{padding:0 16px 16px;border-top:1px solid var(--line)}
+  .says{font-size:13.5px;line-height:1.55;margin:12px 0 2px}
+  .says b.warn{color:var(--warn)}.says b.good{color:var(--good)}.says b.bad{color:var(--bad)}
+  .grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .lbl{font-size:11px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin-top:14px}
+  .g{font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:5px 9px}
+  .g b{font-weight:700}
+  .g.e{opacity:.5}
+  .g.todo{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,var(--line));color:var(--accent);font-weight:600;cursor:pointer}
+  .g.man{background:var(--warn-soft);border-color:var(--warn);color:var(--warn);font-weight:600;cursor:pointer}
+  .meta{font-size:12px;color:var(--mut);margin-top:12px;display:flex;gap:16px;flex-wrap:wrap}
+
+  /* ---- Ano / boletim final ---- */
+  .yr{display:flex;align-items:center;gap:12px;padding:13px 16px}
+  .yr .nm{flex:1;min-width:0}
+  .yr .nm .d{font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ysem{text-align:center;min-width:42px}
+  .ysem .vv{font-weight:700;font-size:15px}
+  .ysem .ll{font-size:10px;color:var(--mut)}
+
+  .loading,.empty{padding:48px 0;text-align:center;color:var(--mut)}
+  .spin{width:26px;height:26px;border:2.5px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;margin:0 auto 12px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .foot{color:var(--mut);font-size:11px;line-height:1.55;margin-top:22px;text-align:center}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<section id="login">
+  <form class="loginCard" id="loginForm" autocomplete="on">
+    <h1 class="brand">Lyceum <b>Remastered</b></h1>
+    <p class="brandsub">Boletim do Colégio Humboldt, do jeito que devia ser.</p>
+    <div class="field">
+      <label for="u">Usuário</label>
+      <input id="u" name="username" type="text" autocapitalize="none" autocomplete="username" placeholder="nome.sobrenome@aluno.humboldt.com.br" required>
+    </div>
+    <div class="field">
+      <label for="p">Senha</label>
+      <input id="p" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required>
+    </div>
+    <button class="primary" id="btnLogin" type="submit">Entrar</button>
+    <div class="err" id="loginErr"></div>
+    <p class="hint">Entra com a mesma conta do Lyceum. A senha vai só pro servidor que busca as notas — não fica guardada.</p>
+  </form>
+</section>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <header>
+    <div class="hwrap">
+      <div class="who"><div class="n" id="who">—</div><div class="t" id="whot">—</div></div>
+      <button class="ghost" id="btnReload">Atualizar</button>
+      <button class="ghost" id="btnLogout">Sair</button>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="controls">
+      <div class="seg" id="seg"></div>
+      <div class="spacer"></div>
+      <div class="goal">passa com <input id="goal" type="number" min="0" max="10" step="0.5"></div>
+    </div>
+    <div id="list"><div class="loading"><div class="spin"></div>Carregando notas…</div></div>
+    <p class="foot">Médias são as oficiais do Lyceum. “Quanto falta” usa a fórmula real da escola e supõe a mesma nota nas avaliações que restam. Boletim final é estimativa. App não oficial.</p>
+  </main>
+</div>
+
+<script>
+//=================== engine (validado: bate 13/13 médias oficiais) ===================
+function num(s){if(s==null||s==="")return null;var n=parseFloat(String(s).replace(",","."));return isNaN(n)?null:n;}
+// O Lyceum cria slots de template a mais (até 5 diversificadas, 6 Mitarbeit) que o professor
+// não usa. Avaliações REAIS por grupo: provas = todas que existem; diversificada = 3 (a 4ª é
+// opcional, só conta se lançada); Mitarbeit = 2. O resto é slot fantasma e não entra no "quanto falta".
+function espGrupo(pref){return pref==="D"?3:pref==="SM"?2:99;}
+function gradeInfo(provas,pref,sp){
+  var re=new RegExp("^"+pref+"\\d+_"+sp+"$");
+  var mine=provas.filter(function(p){return re.test(p.codigoProva);});
+  var graded=[],empty=[];
+  mine.forEach(function(p){var n=num(p.nota);if(n!=null)graded.push(n);else empty.push(p);});
+  var faltam=Math.min(empty.length,Math.max(0,espGrupo(pref)-graded.length));
+  return {graded:graded,empty:empty,faltam:faltam};
+}
+// avaliações que ainda contam (sem slots fantasma) — usado na conta e na lista
+function pendentesReais(d,sp){
+  var provas=d.provas||[];var res=[];
+  ["P","D","SM"].forEach(function(pref){var gi=gradeInfo(provas,pref,sp);res=res.concat(gi.empty.slice(0,gi.faltam));});
+  return res;
+}
+// comp (média parcial renormalizada): só entram componentes REAIS já lançados; bônus (PA/PE) fica fora.
+//   "weight" -> 1 por componente lançado (soma = peso já lançado);  "base" -> nota/média real do componente.
+function resolveCode(code,provas,sp,fillX,comp,provVal){
+  var groups={PR:"P",PS:"P",DS:"D",SMS:"SM"};
+  for(var g in groups){ if(code===g+sp){
+    if(provVal!=null&&(g==="PR"||g==="PS"))return comp==="weight"?1:provVal; // recuperação substitui a média de provas
+    var gi=gradeInfo(provas,groups[g],sp);
+    if(comp){ if(!gi.graded.length)return null; return comp==="weight"?1:gi.graded.reduce(function(s,x){return s+x;},0)/gi.graded.length; }
+    var vals=gi.graded.slice();
+    // "quanto falta": completa só até o total real do grupo (sem slots fantasma)
+    if(fillX!=null){for(var k=0;k<gi.faltam;k++)vals.push(fillX);}
+    if(!vals.length)return null; return vals.reduce(function(s,x){return s+x;},0)/vals.length;
+  }}
+  for(var i=0;i<provas.length;i++){ if(provas[i].codigoProva===code){ var n2=num(provas[i].nota);
+    if(provVal!=null&&/^P\d+_/.test(code))return comp==="weight"?1:provVal; // prova individual substituída pela recuperação
+    if(comp){ if(!(/^(P|D|SM)\d+_/.test(code)||/^PA_/.test(code))||n2==null)return null; return comp==="weight"?1:n2; } // PA (ponto adicional) é componente real; só PE (ponto extra) fica fora como bônus; sem nota fica fora
+    // ponto extra/adicional (bônus) nunca é assumido
+    if(n2==null&&fillX!=null&&/^(P|D|SM)\d+_/.test(code))return fillX; return n2; } }
+  return null;
+}
+function evalFormula(f,provas,sp,fillX,comp,provVal){
+  var s=f,i=0;
+  function ws(){while(i<s.length&&s[i]===" ")i++;}
+  function expr(){var v=term();for(;;){ws();var c=s[i];if(c==="+"||c==="-"){i++;var r=term();v=c==="+"?v+r:v-r;}else break;}return v;}
+  function term(){var v=factor();for(;;){ws();var c=s[i];if(c==="*"||c==="/"){i++;var r=factor();v=c==="*"?v*r:v/r;}else break;}return v;}
+  function factor(){ws();var c=s[i];
+    if(c==="("){i++;var v=expr();ws();if(s[i]===")")i++;return v;}
+    if(/[0-9.]/.test(c)){var j=i;while(i<s.length&&/[0-9.]/.test(s[i]))i++;return parseFloat(s.slice(j,i));}
+    var j2=i;while(i<s.length&&/[A-Za-z0-9_]/.test(s[i]))i++;var id=s.slice(j2,i);ws();
+    if(s[i]==="("){i++;var args=[exprN()];ws();while(s[i]===","){i++;args.push(exprN());}ws();if(s[i]===")")i++;
+      if(id==="MIN")return Math.min.apply(null,args.map(z));
+      if(id==="MAX")return Math.max.apply(null,args.map(z));
+      if(id==="ISNULL")return args[0]==null?z(args[1]):z(args[2]);
+      return z(args[0]);}
+    return resolveCode(id,provas,sp,fillX,comp,provVal);
+  }
+  function exprN(){ws();var start=i;var j=i;while(i<s.length&&/[A-Za-z0-9_]/.test(s[i]))i++;var id=s.slice(j,i);ws();
+    if(id&&(s[i]===","||s[i]===")")){if(/^\d+(\.\d+)?$/.test(id))return parseFloat(id);return resolveCode(id,provas,sp,fillX,comp,provVal);}
+    i=start;return expr();}
+  function z(x){return x==null?0:x;}
+  return z(expr());
+}
+function mediaOficial(d,sp){
+  var ms=(d.mediaSubperiodos||[]).find(function(m){return m.periodo&&m.periodo.subPeriodo&&m.periodo.subPeriodo.codSubPeriodo==sp;});
+  return ms?num(ms.nota):null;
+}
+function formulaDoSub(d,sp){
+  var provas=d.provas||[];
+  var f=provas.find(function(p){return p.formulaNota&&p.periodo&&p.periodo.subPeriodo&&p.periodo.subPeriodo.codSubPeriodo==sp;});
+  if(f)return f.formulaNota;
+  var any=provas.find(function(p){return p.formulaNota;});
+  if(!any)return null;
+  var refSp=any.periodo&&any.periodo.subPeriodo?any.periodo.subPeriodo.codSubPeriodo:"1";
+  if(refSp==sp)return any.formulaNota;
+  return any.formulaNota.replace(new RegExp("(PR|PS|DS|SMS)"+refSp+"\\b","g"),"$1"+sp).replace(new RegExp("([A-Z]+\\d*_)"+refSp+"\\b","g"),"$1"+sp);
+}
+// média parcial honesta: só sobre o que já foi lançado (renormaliza o peso), sem contar
+// como 0 o que ainda não saiu (participação/Mitarbeit, ponto adicional, diversificada que falta).
+function mediaParcial(d,formula,sp,provVal){
+  var provas=d.provas||[];
+  var peso=evalFormula(formula,provas,sp,null,"weight",provVal); // soma dos pesos dos componentes já lançados
+  if(!peso)return null;
+  var base=evalFormula(formula,provas,sp,null,"base",provVal);    // soma ponderada só dos lançados (sem bônus)
+  var bonus=evalFormula(formula,provas,sp,null,null,provVal)-base;// pontos de ponto extra/adicional já lançados
+  return Math.min(base/peso+bonus,10);
+}
+function recNota(d,sp){var p=(d.provas||[]).find(function(x){return x.codigoProva==="R_"+sp;});return p?num(p.nota):null;}
+function provasMedia(d,sp){var gi=gradeInfo(d.provas||[],"P",sp);if(!gi.graded.length)return null;return gi.graded.reduce(function(a,b){return a+b;},0)/gi.graded.length;}
+// recuperação: vale até 6 e substitui a média de provas SE for maior. Recalcula a média com provas=rec.
+function aplicaRec(d,formula,sp){
+  var rec=recNota(d,sp); if(rec==null)return null;
+  var pm=provasMedia(d,sp), recCap=Math.min(rec,6);
+  if(pm==null||recCap<=pm) return {rec:rec,aplica:false};
+  return {rec:rec,aplica:true,nova:mediaParcial(d,formula,sp,recCap)};
+}
+function temPendente(d,sp){return pendentesReais(d,sp).length>0;}
+// alguma nota já lançada num semestre POSTERIOR a sp -> este semestre já acabou
+function temNotaPosterior(d,sp){return (d.provas||[]).some(function(p){var cs=p.periodo&&p.periodo.subPeriodo&&p.periodo.subPeriodo.codSubPeriodo;return cs&&Number(cs)>Number(sp)&&num(p.nota)!=null&&/^(P|D|SM)\d+_/.test(p.codigoProva);});}
+// status de um semestre -> {media, estado, precisa, max, rec}
+function statusSemestre(d,sp,alvo){
+  var provas=d.provas||[];
+  var formula=formulaDoSub(d,sp);
+  var oficial=mediaOficial(d,sp);
+  // valida o motor contra o 1º semestre (se já fechou)
+  var confiavel=true, of1=mediaOficial(d,"1");
+  if(of1!=null&&formulaDoSub(d,"1")){ if(Math.abs(evalFormula(formulaDoSub(d,"1"),provas,"1",null)-of1)>0.06) confiavel=false; }
+  // "em andamento" só se: tem avaliação sem nota, NÃO tem média oficial, o seguinte não lançou nota, e a recuperação ainda não saiu.
+  var pendente=temPendente(d,sp)&&oficial==null&&!temNotaPosterior(d,sp)&&recNota(d,sp)==null;
+  var hasGraded=provas.some(function(p){return p.periodo&&p.periodo.subPeriodo&&p.periodo.subPeriodo.codSubPeriodo==sp&&num(p.nota)!=null&&/^(P|D|SM)\d+_/.test(p.codigoProva);});
+  var media = oficial!=null?oficial:(formula&&hasGraded?mediaParcial(d,formula,sp):null);
+  if(!formula) return {media:media,estado:"sem"};
+  if(!pendente){
+    if(media==null) return {media:null,estado:"sem"};
+    // recuperação dispara pela MÉDIA DE PROVAS < 6 (não pela média geral): rec vale até 6 e substitui a média de provas se for maior.
+    var rr=aplicaRec(d,formula,sp);
+    if(rr&&rr.aplica) return {media:rr.nova,mediaOrig:media,estado:rr.nova>=alvo?"recuperado":"recuperacao",rec:rr.rec};
+    if(media>=alvo) return {media:media,estado:"aprovado"};
+    return {media:media,estado:"recuperacao",rec:(rr?rr.rec:recNota(d,sp))};
+  }
+  // meta deste semestre pra passar NO ANO: (sem1+sem2)/2 >= alvo  =>  este sem >= 2*alvo - outro semestre.
+  // Só dá pra mirar o ano se o outro semestre já fechou (nota oficial); senão mira o próprio semestre.
+  var mOutro=mediaOficial(d, sp==="1"?"2":"1");
+  var mira=mOutro!=null?"ano":"sem";
+  var alvoSem=mira==="ano"?(2*alvo-mOutro):alvo;
+  var info={mira:mira,alvoSem:alvoSem,mOutro:mOutro};
+  // semestre em andamento -> quanto falta (se motor confiável)
+  if(!confiavel) return {media:media,estado:"andamento"};
+  if(evalFormula(formula,provas,sp,0)>=alvoSem) return Object.assign({media:media,estado:"garantido"},info);
+  var max=evalFormula(formula,provas,sp,10);
+  if(max<alvoSem) return Object.assign({media:media,estado:"impossivel",max:max,rec:recNota(d,sp)},info);
+  var lo=0,hi=10;for(var k=0;k<40;k++){var mid=(lo+hi)/2;if(evalFormula(formula,provas,sp,mid)>=alvoSem)hi=mid;else lo=mid;}
+  return Object.assign({media:media,estado:"precisa",precisa:Math.ceil((hi-1e-9)*100)/100},info);
+}
+function freq(d){var f=(d.faltas||[])[0];return f?{pres:f.percentualPresenca,faltas:f.faltasAcumuladas,permitidas:f.faltasPermitidas}:null;}
+
+//=================== app ===================
+var S={ data:null, sp:"2", goal:6, sess:null };
+var $=function(id){return document.getElementById(id);};
+function fmt(n){return n==null?"—":(Math.round(n*100)/100).toFixed(2).replace(".",",");}
+function colorFor(n,alvo){if(n==null)return"mut";return n>=alvo?"good":n>=alvo-1?"warn":"bad";}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+
+function saveSess(s){S.sess=s;try{sessionStorage.setItem("lyr_sess",JSON.stringify(s));}catch(e){}}
+function loadSess(){try{return JSON.parse(sessionStorage.getItem("lyr_sess"));}catch(e){return null;}}
+function clearSess(){S.sess=null;try{sessionStorage.removeItem("lyr_sess");}catch(e){}}
+
+// ---- login ----
+$("loginForm").addEventListener("submit",async function(e){
+  e.preventDefault();
+  var btn=$("btnLogin"), err=$("loginErr");
+  err.textContent="";btn.disabled=true;btn.textContent="Entrando…";
+  try{
+    var r=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:$("u").value.trim(),password:$("p").value})});
+    var j=await r.json();
+    if(!r.ok)throw new Error(j.error||"Falha no login");
+    saveSess(j); $("p").value="";
+    showApp(); load();
+  }catch(ex){ err.textContent=ex.message; }
+  btn.disabled=false;btn.textContent="Entrar";
+});
+
+function showApp(){
+  $("login").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  $("who").textContent=(S.sess.nome||"Aluno").replace(/^(.+?),\s*(.+)$/,"$2 $1");
+  $("whot").textContent=(S.sess.curso?S.sess.curso+" · ":"")+"turma "+(S.sess.turma||"—");
+}
+function showLogin(){ $("app").classList.add("hidden"); $("login").classList.remove("hidden"); }
+
+$("btnLogout").onclick=function(){clearSess();S.data=null;showLogin();};
+$("btnReload").onclick=function(){load(true);};
+
+// segmented control
+["1","2","ano"].forEach(function(v){
+  var b=document.createElement("button");
+  b.textContent=v==="ano"?"Ano":v+"º sem";
+  b.dataset.v=v;
+  b.onclick=function(){S.sp=v;syncSeg();render();};
+  $("seg").appendChild(b);
+});
+function syncSeg(){Array.prototype.forEach.call($("seg").children,function(b){b.classList.toggle("on",b.dataset.v===S.sp);});}
+
+// goal
+(function(){try{var g=parseFloat(localStorage.getItem("lyr_goal"));if(!isNaN(g))S.goal=g;}catch(e){}})();
+$("goal").value=S.goal;
+$("goal").onchange=function(){S.goal=parseFloat(this.value)||6;try{localStorage.setItem("lyr_goal",S.goal);}catch(e){}render();};
+
+// ---- notas manuais (prof entregou mas não postou no Lyceum; ficam só neste aparelho) ----
+function manuais(){try{return JSON.parse(localStorage.getItem("lyr_manuais"))||{};}catch(e){return {};}}
+function aplicarManuais(){var m=manuais();(S.data||[]).forEach(function(d){(d.provas||[]).forEach(function(p){
+  if(p._manual){p.nota=null;p._manual=false;}                 // reverte antes de reaplicar
+  var k=p.codDisciplina+"|"+p.codigoProva;
+  if(m[k]!=null&&num(p.nota)==null){p.nota=String(m[k]);p._manual=true;} // só preenche o que o Lyceum não lançou
+});});}
+function manualNota(codDisc,codProva){
+  var k=codDisc+"|"+codProva, m=manuais(), atual=m[k];
+  var v=prompt("Nota que a professora já entregou (0 a 10). Vazio = remover. Fica só no seu aparelho, não é oficial do Lyceum:", atual!=null?String(atual):"");
+  if(v===null)return;
+  v=String(v).trim().replace(",",".");
+  if(v!==""){ var n=parseFloat(v); if(isNaN(n)||n<0||n>10){alert("Nota inválida — use 0 a 10.");return;} m[k]=n; } else { delete m[k]; }
+  try{localStorage.setItem("lyr_manuais",JSON.stringify(m));}catch(e){}
+  aplicarManuais(); render();
+}
+async function load(force){
+  if(!S.sess)return;
+  $("list").innerHTML='<div class="loading"><div class="spin"></div>Carregando notas…</div>';
+  try{
+    var r=await fetch("/api/boletim",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({cookie:S.sess.cookie,codPessoa:S.sess.codPessoa,codAluno:S.sess.codAluno})});
+    var j=await r.json();
+    if(!r.ok){ if(r.status===401){clearSess();showLogin();return;} throw new Error(j.error||"Erro"); }
+    S.data=j;
+    aplicarManuais();
+    var per=(j[0]||{}).periodo;
+    if(per&&per.subPeriodoCorrente&&S.sp!=="ano")S.sp=per.subPeriodoCorrente.codSubPeriodo;
+    syncSeg();render();
+  }catch(ex){ $("list").innerHTML='<div class="empty">'+esc(ex.message)+'</div>'; }
+}
+
+function subjects(){ return (S.data||[]).filter(function(d){return (d.provas||[]).some(function(p){return p.formulaNota||num(p.nota)!=null;});}); }
+
+function render(){
+  if(!S.data)return;
+  syncSeg();
+  if(S.sp==="ano")return renderAno();
+  var alvo=S.goal, list=$("list"); list.innerHTML="";
+  var discs=subjects();
+  discs.forEach(function(d){
+    var st=statusSemestre(d,S.sp,alvo);
+    var card=document.createElement("div");card.className="card";
+    var chip=chipFor(st,alvo);
+    card.innerHTML=
+      '<div class="head">'+
+        '<div class="nm"><div class="d">'+esc(d.nomeDisciplina)+'</div><div class="p">'+esc(d.nomeDocente||"")+'</div></div>'+
+        (chip?'<span class="chip '+chip.cls+'">'+chip.txt+'</span>':'')+
+        '<span class="m '+colorFor(st.media,alvo)+'">'+fmt(st.media)+'</span>'+
+        '<span class="caret">▸</span>'+
+      '</div>'+
+      '<div class="detail"><div class="dbody">'+detailHtml(d,st,alvo)+'</div></div>';
+    var head=card.querySelector(".head"), det=card.querySelector(".detail");
+    head.onclick=function(){ var open=card.classList.toggle("open"); det.style.maxHeight=open?det.firstElementChild.scrollHeight+40+"px":"0"; };
+    list.appendChild(card);
+  });
+}
+
+function chipFor(st,alvo){
+  switch(st.estado){
+    case"aprovado":return{cls:"good",txt:"aprovado"};
+    case"garantido":return{cls:"good",txt:"garantido"};
+    case"precisa":return{cls:"warn",txt:"precisa "+fmt(st.precisa)};
+    case"recuperado":return{cls:"good",txt:"recuperado"};
+    case"recuperacao":return{cls:"bad",txt:"recuperação"};
+    case"impossivel":return{cls:"bad",txt:"recuperação"};
+    case"andamento":return{cls:"mut",txt:"em curso"};
+    default:return null;
+  }
+}
+function nomeProvaCurto(p){return (p.nomeProva||"").replace(/^\d+º\s*Semestre\s*-\s*/,"");}
+function detailHtml(d,st,alvo){
+  // avaliacoes do semestre: separa o que ainda falta lancar do que ja tem nota
+  // só avaliações reais: provas, diversificada e participação. Ponto extra/adicional (bônus) nem entra.
+  var provas=(d.provas||[]).filter(function(p){return p.periodo&&p.periodo.subPeriodo&&p.periodo.subPeriodo.codSubPeriodo==S.sp&&/^(P|D|SM)\d+_/.test(p.codigoProva);});
+  var faltam=pendentesReais(d,S.sp);   // só as reais (sem slots fantasma do Lyceum)
+  var feitas=provas.filter(function(p){return num(p.nota)!=null;});
+
+  var noAno=st.mira==="ano", onde=noAno?"no ano":"no semestre";
+  var says="";
+  if(st.estado==="precisa"){
+    says='Pra passar <b class="warn">'+onde+'</b> (média '+fmt(alvo)+') você precisa de <b class="warn">'+fmt(st.precisa)+'</b> em cada uma das '+faltam.length+' avaliações que ainda faltam';
+    if(noAno)says+=' — seu 1º semestre foi '+fmt(st.mOutro)+', então o 2º precisa fechar em '+fmt(st.alvoSem);
+    says+=':';
+  }
+  else if(st.estado==="garantido")says=noAno?'<b class="good">Ano garantido</b> — com o 1º semestre ('+fmt(st.mOutro)+'), mesmo zerando o que falta você passa no ano.':'<b class="good">Já está garantido</b> — mesmo zerando o que falta, a média fica ≥ '+fmt(alvo)+'.';
+  else if(st.estado==="aprovado")says='<b class="good">Aprovado</b> neste semestre com '+fmt(st.media)+'.';
+  else if(st.estado==="recuperado")says='<b class="good">Recuperado</b> — a média de provas ('+fmt(provasMedia(d,S.sp))+', abaixo de 6) foi substituída pela recuperação (<b>'+fmt(st.rec)+'</b>, vale até 6). Média '+fmt(st.mediaOrig)+' → <b class="good">'+fmt(st.media)+'</b>.';
+  else if(st.estado==="recuperacao"){
+    if(st.rec==null)says='<b class="bad">Em recuperação</b> — média '+fmt(st.media)+' (abaixo de 6). Recuperação ainda não lançada.';
+    else if(st.mediaOrig!=null)says='<b class="bad">Ainda em recuperação</b> — mesmo com a recuperação (<b>'+fmt(st.rec)+'</b>) a média ficou '+fmt(st.media)+' (abaixo de 6).';
+    else says='<b class="bad">Em recuperação</b> — média '+fmt(st.media)+' (abaixo de 6). A recuperação (<b>'+fmt(st.rec)+'</b>) não melhora a média de provas.';
+  }
+  else if(st.estado==="impossivel")says=noAno?'<b class="bad">Não dá mais pra passar no ano pela média</b> (o 2º semestre no máximo fecha '+fmt(st.max)+', precisaria de '+fmt(st.alvoSem)+'). Vai depender de recuperação/conselho.':'<b class="bad">Não dá mais pela média</b> (máximo possível '+fmt(st.max)+'). Vai depender de recuperação/conselho.';
+  else if(st.estado==="andamento")says='Semestre em andamento — média parcial '+fmt(st.media)+'.';
+  else says='<span style="color:var(--mut)">Sem fórmula de média para esta disciplina.</span>';
+
+  var emCurso=st.estado==="precisa"||st.estado==="garantido"||st.estado==="andamento";
+  var html='<div class="says">'+says+'</div>';
+  if(faltam.length&&emCurso){
+    html+='<div class="lbl">Ainda dá pra tirar nota em</div><div class="grid">'+
+      faltam.map(function(p){return '<span class="g todo" onclick="manualNota(\''+p.codDisciplina+'\',\''+p.codigoProva+'\')">'+esc(nomeProvaCurto(p))+' +</span>';}).join("")+'</div>'+
+      '<div style="font-size:11px;color:var(--mut);margin-top:6px">Toque numa avaliação pra lançar a nota que a professora já entregou (fica só no seu aparelho).</div>';
+  }
+  if(feitas.length){
+    html+='<div class="lbl">Notas lançadas</div><div class="grid">'+
+      feitas.map(function(p){
+        if(p._manual)return '<span class="g man" onclick="manualNota(\''+p.codDisciplina+'\',\''+p.codigoProva+'\')">'+esc(nomeProvaCurto(p))+' <b>'+fmt(num(p.nota))+'</b> ✎</span>';
+        return '<span class="g">'+esc(nomeProvaCurto(p))+' <b>'+fmt(num(p.nota))+'</b></span>';
+      }).join("")+'</div>';
+  }
+  var fr=freq(d);
+  if(fr)html+='<div class="meta"><span>Presença '+fr.pres+'%</span><span>Faltas '+fr.faltas+'/'+fr.permitidas+'</span></div>';
+  return html;
+}
+
+function renderAno(){
+  var alvo=S.goal, list=$("list"); list.innerHTML="";
+  var discs=subjects();
+  var semAtual=((S.data[0]||{}).periodo&&S.data[0].periodo.subPeriodoCorrente&&S.data[0].periodo.subPeriodoCorrente.codSubPeriodo)||"2";
+  discs.forEach(function(d){
+    var m1=statusSemestre(d,"1",alvo).media, m2=statusSemestre(d,"2",alvo).media, ma=mediaAnual(d), an=ma.media;
+    var chip;
+    if(an==null)chip={cls:"mut",txt:"—"};
+    else if(ma.oficial)chip=an>=6?{cls:"good",txt:"aprovado"}:{cls:"bad",txt:"recuperação"};
+    else{                                                      // 2º em andamento: já dá pra dizer se o ANO está garantido
+      var stc=statusSemestre(d,semAtual,6);
+      if(stc.estado==="garantido"||stc.estado==="aprovado"||stc.estado==="recuperado")chip={cls:"good",txt:"garantido"};
+      else if(stc.estado==="impossivel")chip={cls:"bad",txt:"não dá"};
+      else chip={cls:"warn",txt:"não garantido"};
+    }
+    var card=document.createElement("div");card.className="card";
+    card.innerHTML='<div class="yr">'+
+      '<div class="nm"><div class="d">'+esc(d.nomeDisciplina)+'</div></div>'+
+      '<div class="ysem"><div class="vv '+colorFor(m1,alvo)+'" style="color:var(--'+colorFor(m1,alvo)+')">'+fmt(m1)+'</div><div class="ll">1º</div></div>'+
+      '<div class="ysem"><div class="vv '+colorFor(m2,alvo)+'" style="color:var(--'+colorFor(m2,alvo)+')">'+fmt(m2)+'</div><div class="ll">2º</div></div>'+
+      '<div class="ysem"><div class="vv" style="color:var(--'+colorFor(an,alvo)+')">'+fmt(an)+'</div><div class="ll">ano</div></div>'+
+      '<span class="chip '+chip.cls+'">'+chip.txt+'</span>'+
+    '</div>';
+    list.appendChild(card);
+  });
+}
+// média FINAL do semestre (já com recuperação) quando ele fechou; null se ainda em andamento.
+function mediaFinalSem(d,sp){var st=statusSemestre(d,sp,6);return (st.estado==="aprovado"||st.estado==="recuperado"||st.estado==="recuperacao")?st.media:null;}
+// média anual = (1º+2º)/2 com os dois fechados (já contando recuperação); senão estimativa parcial.
+function mediaAnual(d){
+  var o1=mediaFinalSem(d,"1"), o2=mediaFinalSem(d,"2");
+  if(o1!=null&&o2!=null) return {media:(o1+o2)/2, oficial:true};
+  var m1=statusSemestre(d,"1",S.goal).media, m2=statusSemestre(d,"2",S.goal).media;
+  var xs=[m1,m2].filter(function(x){return x!=null;});
+  if(!xs.length) return {media:null, oficial:false};
+  return {media:xs.reduce(function(a,b){return a+b;},0)/xs.length, oficial:false};
+}
+
+// init: sessão salva?
+(function(){
+  var s=loadSess();
+  if(s&&s.cookie){ S.sess=s; showApp(); load(); }
+})();
+</script>
+</body>
+</html>

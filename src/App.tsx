@@ -2,15 +2,13 @@ import { useEffect, useState } from 'react';
 import { MotionConfig, motion } from 'motion/react';
 import { useAuth } from './hooks/useAuth';
 import { useClassroom } from './hooks/useClassroom';
-import { useTasksStore, applyFilters } from './hooks/useTasks';
+import { useTasksStore } from './hooks/useTasks';
 import { mockAnnouncements, mockTasks } from './data/mockTasks';
 import { extractAllTasksFromAnnouncements } from './utils/announcementParser';
 import { LoginButton } from './components/Auth/LoginButton';
 import { Header } from './components/Layout/Header';
 import { Toast } from './components/Layout/Toast';
-import { FilterBar } from './components/Filters/FilterBar';
-import { Dashboard } from './components/Dashboard/Dashboard';
-import { AnnouncementsList } from './components/Announcements/AnnouncementsList';
+import { Agenda } from './components/Agenda/Agenda';
 import { TeacherProfiles } from './components/Teachers/TeacherProfiles';
 import { TestPrep } from './components/Tests/TestPrep';
 import { ConsentGate, PrivacyPolicy, deleteAllData } from './components/Privacy/Privacy';
@@ -29,7 +27,6 @@ const USE_MOCK_DATA = new URLSearchParams(location.search).has('demo');
 export default function App() {
   const { accessToken, profile, isSessionExpired, login, logout } = useAuth();
   const { tasks, announcements, courses, loading, error, refresh } = useClassroom(accessToken);
-  const filters = useTasksStore((state) => state.filters);
   const darkMode = useTasksStore((state) => state.darkMode);
 
   const [toast, setToast] = useState<string | null>(null);
@@ -58,7 +55,6 @@ export default function App() {
   const mockExtractedTasks = USE_MOCK_DATA ? extractAllTasksFromAnnouncements(mockAnnouncements, mockCourses) : [];
   const displayedTasks = USE_MOCK_DATA ? [...mockTasks, ...mockExtractedTasks] : tasks;
   const displayedAnnouncements = USE_MOCK_DATA ? mockAnnouncements : announcements;
-  const filteredTasks = applyFilters(displayedTasks, filters);
   const profiles = buildTeacherProfiles(displayedTasks, displayedAnnouncements, extraTeachers);
 
   return (
@@ -88,11 +84,12 @@ export default function App() {
 
         {tab === 'licoes' &&
           (connected ? (
-            <>
-              <FilterBar courses={USE_MOCK_DATA ? mockCourses : courses} />
-              <Dashboard tasks={filteredTasks} loading={loading} />
-              <AnnouncementsList announcements={displayedAnnouncements} />
-            </>
+            <Agenda
+              tasks={displayedTasks}
+              announcements={displayedAnnouncements}
+              courses={USE_MOCK_DATA ? mockCourses : courses}
+              loading={loading}
+            />
           ) : (
             <LoginButton onLogin={login} />
           ))}

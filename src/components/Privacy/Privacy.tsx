@@ -68,7 +68,7 @@ export function ConsentGate() {
       <div className="max-w-5xl mx-auto grid gap-10 lg:grid-cols-[1.2fr_1fr] lg:items-start">
         <div className="space-y-6">
           <Logo className="text-2xl" />
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-texto leading-tight max-w-md">Seu piloto de estudos.</h1>
+          <h1 className="font-display text-5xl sm:text-6xl font-semibold tracking-tight text-texto leading-[1.05] max-w-md">Seu piloto de estudos.</h1>
           <p className="text-lg text-texto-suave max-w-md">Lições do Classroom, provas marcadas e notas do Lyceum num lugar só. Tudo fica neste aparelho.</p>
         </div>
 

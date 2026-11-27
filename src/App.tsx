@@ -8,7 +8,7 @@ import { extractAllTasksFromAnnouncements } from './utils/announcementParser';
 import { LoginButton } from './components/Auth/LoginButton';
 import { Header } from './components/Layout/Header';
 import { Toast } from './components/Layout/Toast';
-import { Agenda } from './components/Agenda/Agenda';
+import { Home } from './components/Home/Home';
 import { TeacherProfiles } from './components/Teachers/TeacherProfiles';
 import { TestPrep } from './components/Tests/TestPrep';
 import { ConsentGate, PrivacyPolicy, deleteAllData } from './components/Privacy/Privacy';
@@ -84,10 +84,9 @@ export default function App() {
 
         {tab === 'licoes' &&
           (connected ? (
-            <Agenda
+            <Home
               tasks={displayedTasks}
               announcements={displayedAnnouncements}
-              courses={USE_MOCK_DATA ? mockCourses : courses}
               loading={loading}
             />
           ) : (

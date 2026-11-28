@@ -1,0 +1,4 @@
+-- No auth.users/password rows are inserted with raw SQL.
+-- Run scripts/seed-local.ts explicitly after migration on the disposable local
+-- test stack. It uses Supabase Auth for synthetic accounts, then ordinary user
+-- identities for all application data writes. Nothing here creates real users.

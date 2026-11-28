@@ -66,72 +66,63 @@ function nextOccurrenceOfWeekday(weekday: number, from: Date): Date {
   return result;
 }
 
-/** Tenta extrair uma data do texto em pt-BR. Retorna null se nenhuma data for encontrada. */
-export function parseDateFromText(text: string, reference = new Date()): Date | null {
+/** Creates a local calendar date without silently rolling nonexistent dates into another month. */
+function calendarDate(year: number, month: number, day: number): Date | null {
+  if (![year, month, day].every(Number.isInteger) || year < 1 || year > 9999
+    || month < 0 || month > 11 || day < 1 || day > 31) return null;
+  const result = new Date(0);
+  result.setFullYear(year, month, day);
+  result.setHours(23, 59, 0, 0);
+  return result.getFullYear() === year && result.getMonth() === month && result.getDate() === day ? result : null;
+}
+
+/** Inferred dates remain suggestions; null publication time prevents guessing relative dates. */
+export function parseDateFromText(text: string, reference: Date | null = new Date()): Date | null {
   const norm = normalize(text);
+  const validReference = reference && Number.isFinite(reference.getTime()) ? reference : null;
 
-  if (/depois\s+de\s+amanha/.test(norm)) {
-    const d = new Date(reference);
-    d.setDate(d.getDate() + 2);
-    d.setHours(23, 59, 0, 0);
-    return d;
-  }
-  if (/\bamanha\b/.test(norm)) {
-    const d = new Date(reference);
-    d.setDate(d.getDate() + 1);
-    d.setHours(23, 59, 0, 0);
-    return d;
-  }
-  if (/\bhoje\b/.test(norm)) {
-    const d = new Date(reference);
-    d.setHours(23, 59, 0, 0);
-    return d;
-  }
-  if (/\bpro?xima\s+semana\b/.test(norm)) {
-    const d = new Date(reference);
-    d.setDate(d.getDate() + 7);
-    d.setHours(23, 59, 0, 0);
-    return d;
-  }
-
-  // Dia da semana (ex: "na sexta", "na quinta-feira")
-  for (const [name, weekday] of Object.entries(WEEKDAYS)) {
-    if (norm.includes(name)) {
-      return nextOccurrenceOfWeekday(weekday, reference);
-    }
-  }
-
-  // dd/mm ou dd/mm/yyyy
+  // An explicit date takes precedence over weekday/relative words in the same message.
   const dmMatch = norm.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);
   if (dmMatch) {
-    const day = parseInt(dmMatch[1]);
-    const month = parseInt(dmMatch[2]) - 1;
-    let year = dmMatch[3] ? parseInt(dmMatch[3]) : reference.getFullYear();
+    if (!dmMatch[3] && !validReference) return null;
+    if (dmMatch[3] && ![2, 4].includes(dmMatch[3].length)) return null;
+    let year = dmMatch[3] ? Number(dmMatch[3]) : validReference!.getFullYear();
     if (year < 100) year += 2000;
-    const d = new Date(year, month, day, 23, 59, 0, 0);
-    if (!isNaN(d.getTime())) return d;
+    return calendarDate(year, Number(dmMatch[2]) - 1, Number(dmMatch[1]));
   }
 
-  // "dia X de mês" ou "X de mês"
   for (const [monthName, monthIdx] of Object.entries(MONTHS)) {
-    const re = new RegExp(`(\\d{1,2})\\s+de\\s+${monthName}`);
-    const match = norm.match(re);
-    if (match) {
-      const day = parseInt(match[1]);
-      const d = new Date(reference.getFullYear(), monthIdx, day, 23, 59, 0, 0);
-      if (!isNaN(d.getTime())) return d;
-    }
+    const match = norm.match(new RegExp('(\\d{1,2})\\s+de\\s+' + monthName + '\\b'));
+    if (match) return validReference ? calendarDate(validReference.getFullYear(), monthIdx, Number(match[1])) : null;
+  }
+  if (!validReference) return null;
+
+  let offset: number | null = null;
+  if (/depois\s+de\s+amanha/.test(norm)) offset = 2;
+  else if (/\bamanha\b/.test(norm)) offset = 1;
+  else if (/\bhoje\b/.test(norm)) offset = 0;
+  else if (/\bpro?xima\s+semana\b/.test(norm)) offset = 7;
+  if (offset !== null) {
+    const result = new Date(validReference);
+    result.setDate(result.getDate() + offset);
+    result.setHours(23, 59, 0, 0);
+    return result;
   }
 
-  // "dia X" isolado
+  for (const [name, weekday] of Object.entries(WEEKDAYS)) {
+    if (new RegExp('\\b' + name + '\\b').test(norm)) return nextOccurrenceOfWeekday(weekday, validReference);
+  }
+
   const diaMatch = norm.match(/\bdia\s+(\d{1,2})\b/);
   if (diaMatch) {
-    const day = parseInt(diaMatch[1]);
-    const d = new Date(reference.getFullYear(), reference.getMonth(), day, 23, 59, 0, 0);
-    if (d < reference) d.setMonth(d.getMonth() + 1);
-    if (!isNaN(d.getTime())) return d;
+    const result = calendarDate(validReference.getFullYear(), validReference.getMonth(), Number(diaMatch[1]));
+    if (!result) return null;
+    if (result < validReference) {
+      const nextMonth = new Date(validReference.getFullYear(), validReference.getMonth() + 1, 1);
+      return calendarDate(nextMonth.getFullYear(), nextMonth.getMonth(), Number(diaMatch[1]));
+    }
+    return result;
   }
-
   return null;
 }
 
@@ -168,7 +159,7 @@ const EXCLUSION_PATTERNS = [
   /ficar[aá]\s+sem\s+nota/i,
 ];
 
-export function extractTasksFromAnnouncementText(text: string): ExtractedTaskData[] {
+export function extractTasksFromAnnouncementText(text: string, reference: Date | null = new Date()): ExtractedTaskData[] {
   // Quebra em frases por pontuação ou quebras de linha
   const sentences = text
     .split(/(?<=[.!?\n])\s+|[\n]+/)
@@ -187,7 +178,7 @@ export function extractTasksFromAnnouncementText(text: string): ExtractedTaskDat
     if (isExclusion) continue;
 
     // Tenta achar data na própria frase, depois no texto completo
-    const dueDate = parseDateFromText(sentence) ?? parseDateFromText(text);
+    const dueDate = parseDateFromText(sentence, reference) ?? parseDateFromText(text, reference);
 
     const title = buildTitle(sentence);
     // Deduplicar por título similar
@@ -208,7 +199,7 @@ export function buildTasksFromAnnouncement(
   announcement: NormalizedAnnouncement,
   course: CourseInfo,
 ): NormalizedTask[] {
-  const extracted = extractTasksFromAnnouncementText(announcement.text);
+  const extracted = extractTasksFromAnnouncementText(announcement.text, announcement.creationTime);
   return extracted.map((item, index) => ({
     id: `extracted-${announcement.id}-${index}`,
     type: 'tarefa',
@@ -220,7 +211,7 @@ export function buildTasksFromAnnouncement(
     dueDate: item.dueDate,
     alternateLink: announcement.alternateLink,
     materials: announcement.materials,
-    status: 'pendente',
+    status: !item.dueDate ? 'sem_data' : item.dueDate < new Date() ? 'atrasado' : 'pendente',
     urgency: getUrgencyLevel(item.dueDate),
     daysRemaining: getDaysRemaining(item.dueDate),
     creationTime: announcement.creationTime,

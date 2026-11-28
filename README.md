@@ -1,98 +1,32 @@
-# lernpilot
+# LernPilot
 
-App de estudos para alunos: junta o HomeworkHub (lições do Google Classroom por prioridade) e o Lyceum Remastered (boletim do Colégio Humboldt), com provas marcadas, lista de conteúdos e perfil de cobrança de cada professor.
+Stand: 27. November 2026. Phase 2 ist lokal technisch abgeschlossen; keine Produktionsfreigabe. React/Vite/TypeScript bleiben erhalten. Das neueste Home-Dashboard aus GitHub-main 39e690f und der getrennte Account-Bereich sind integriert und geprüft.
 
-- **Lições**: Google Classroom (opcional, só leitura, direto do navegador).
-- **Provas**: marque a prova, liste os conteúdos e marque o que já estudou. Tarefas do Classroom com "prova/teste/avaliação" no título aparecem como sugestão.
-- **Professores**: tipos de questão, dificuldade, temas que sempre caem e pontos por parte.
-- **Notas**: o Lyceum Remastered em `public/notas.html`, usando `api/login.js` e `api/boletim.js` (proxy que não guarda senha).
-- **Privacidade**: consentimento no primeiro acesso (adulto ou responsável), página de privacidade e "Apagar meus dados". Tudo fica no aparelho; sem IA, sem contas, sem analytics.
+## Öffnen
 
-`/?demo` abre com dados de exemplo, sem login do Google. Antes de publicar, preencha `CONTACT` em `src/components/Privacy/Privacy.tsx`.
+Die ausführliche [Schritt-für-Schritt-Anleitung](docs/START_HERE.md) erklärt Docker/Supabase, API, Frontend, Demo und Beenden. Eine für echte Schuldaten freigegebene App existiert noch nicht.
 
-## Stack
+Nur Home-Offline-Demo: PowerShell öffnen:
 
-- React + Vite + TypeScript
-- Tailwind CSS
-- Google OAuth 2.0 + Google Classroom API (REST)
-- Zustand (estado global, com persistência em `localStorage`)
-
-## 1. Pré-requisitos
-
-- [Node.js](https://nodejs.org/) 18 ou superior
-
-## 2. Configurando o Google Cloud Console
-
-Para que o app possa fazer login com o Google e acessar o Classroom, você precisa criar credenciais OAuth:
-
-1. Acesse o [Google Cloud Console](https://console.cloud.google.com/).
-2. Crie um novo projeto (ou selecione um existente).
-3. No menu lateral, vá em **APIs e serviços > Biblioteca** e ative a **Google Classroom API**.
-4. Vá em **APIs e serviços > Tela de consentimento OAuth**:
-   - Tipo de usuário: **Externo** (ou Interno, se for conta institucional do Google Workspace).
-   - Preencha o nome do app ("lernpilot"), e-mail de suporte e domínio (se houver).
-   - Em **Escopos**, adicione:
-     - `.../auth/classroom.courses.readonly`
-     - `.../auth/classroom.coursework.me.readonly`
-     - `.../auth/classroom.announcements.readonly`
-     - `.../auth/userinfo.profile`
-     - `.../auth/userinfo.email`
-   - Em **Usuários de teste**, adicione o e-mail da conta Google/Classroom que será usada para testar (enquanto o app estiver em modo de teste).
-5. Vá em **APIs e serviços > Credenciais** e clique em **Criar credenciais > ID do cliente OAuth**:
-   - Tipo de aplicativo: **Aplicativo da Web**.
-   - Em **Origens JavaScript autorizadas**, adicione:
-     - `http://localhost:5173` (porta padrão do Vite em desenvolvimento)
-     - A URL de produção do seu deploy (ex: `https://lernpilot.vercel.app`)
-   - Não é necessário configurar "URIs de redirecionamento" — o app usa o fluxo implícito de token via `@react-oauth/google`.
-6. Copie o **Client ID** gerado (algo como `123456789-abc.apps.googleusercontent.com`).
-
-## 3. Configurando o projeto
-
-```bash
-cd lernpilot
-npm install
-cp .env.example .env
-```
-
-Abra o `.env` e cole o Client ID copiado:
-
-```
-VITE_GOOGLE_CLIENT_ID=123456789-abc.apps.googleusercontent.com
-```
-
-## 4. Executando em desenvolvimento
-
-```bash
+```powershell
+cd "C:\Users\crist\OneDrive\Documents\ChatGPT\Lernpilot projekt\lernpilot-integration"
 npm run dev
 ```
 
-Acesse `http://localhost:5173`, clique em **Entrar com o Google** e autorize os escopos do Classroom.
+http://127.0.0.1:5174/?demo öffnen. Beenden: Strg+C. Für Benutzerkonten die zwei Server und den lokalen Stack gemäß Startanleitung starten; Einstieg http://127.0.0.1:5174/account. Vorhandene Installationen/Images nicht wiederholen. Keine echten Daten verwenden.
 
-> ⚠️ Enquanto a tela de consentimento OAuth estiver em modo de teste, apenas os e-mails cadastrados em "Usuários de teste" conseguirão fazer login.
+## Tatsächliche Prüfungen
 
-## 5. Build para produção
+110 Frontend-/Fachtests (99 bisherige + elf neue Home-Fälle), 26 HTTP-Regressionen, zehn Demo-/Home-Browserprüfungen, zwei echte Desktop-/Mobil-Accountabläufe und 14 Infrastrukturtests bestanden. Echter Datenbank-/API-Lauf: 24 Untertests plus zwei Elterntests, insgesamt 26/26. Reale Authentifizierung, Registrierung, Refresh, Logout, Tokenablauf, RLS auf acht Tabellen, Constraints und getrennte Benutzerzugriffe bestätigt. Lint, Typprüfung, beide Builds, SQL-Lint und Datenbank-Sicherheitsprüfung erfolgreich. npm audit: keine bekannten Befunde.
 
-```bash
-npm run build
-npm run preview
-```
+[Finaler Integrationsbericht](docs/FINAL_INTEGRATION_REPORT.md), [Phase-2-Bericht](docs/PHASE2_REPORT.md), [Prüfprotokoll](docs/VALIDATION.md), [Sicherheit](docs/SECURITY.md), [Architektur](docs/ARCHITECTURE.md), [Schema](docs/DATABASE_SCHEMA.md), [Infrastruktur](docs/LOCAL_INFRASTRUCTURE_SETUP.md).
 
-Os arquivos finais ficam em `dist/`. Você pode hospedar essa pasta na Vercel, Netlify ou qualquer serviço de hospedagem estática — lembre-se de adicionar a URL de produção nas **Origens JavaScript autorizadas** do Client ID e configurar a variável de ambiente `VITE_GOOGLE_CLIENT_ID` no painel do serviço de hospedagem.
+## Git und Team
 
-## Estrutura do projeto
+Lokaler Branch feat/integration-core-infrastructure. Kein Commit, Push oder Merge ausgeführt. Vor Commit und Push jeweils ausdrückliche Zustimmung. Originalcheckout lernpilot-app bleibt unverändert erhalten. GitHub-main 39e690f wurde erneut geprüft: keine neueren Commits. Das Home-Design ist mit Kalender, Filtern, Notizen und vorhandener Fachlogik tatsächlich integriert; siehe [Remote-Abgleich](docs/PHASE2_REMOTE_REVIEW.md) und [Commit-Vorbereitung](docs/PHASE2_COMMIT_PLAN.md).
 
-```
-src/
-├── components/      Componentes de UI (Auth, Dashboard, TaskCard, Announcements, Filters, Layout)
-├── hooks/            useAuth (login Google), useClassroom (busca/normalização), useTasks (filtros e estado local)
-├── services/         classroomApi.ts — chamadas REST à Classroom API
-├── utils/            dateUtils.ts (urgência/formatação de datas), taskUtils.ts (normalização)
-├── data/             mockTasks.ts — dados mockados para desenvolvimento de UI
-└── types/            interfaces TypeScript (dados normalizados e tipos brutos da API)
-```
+Projektinitiator: Noten/Lyceum/PDF/Prüfungsgenerator. Icaro: School Hub/Google/Apple/Tutor. Kitaday: UI/Design. Analytics: Projektinitiator und Icaro. Gemeinsame Auth-, API- und RLS-Verträge gemeinsam abstimmen. Menschliches Review dieser kombinierten Änderung steht aus.
 
-## Observações
+Liveintegrationen, KI, PDF und produktiver Betrieb sind nicht Bestandteil dieser Phase. Gmail bleibt ausgeschlossen. Schulgebundene Notenformeln sind unbestätigte Demo-Regeln.
 
-- Os tokens de acesso e o cache de tarefas ficam salvos no `localStorage` do navegador.
-- O checkbox "Concluído" e as anotações por tarefa são apenas locais (não são enviados ao Classroom).
-- Se a sessão expirar, o app exibe um aviso e pede para fazer login novamente.
+Für neue Arbeitskopien: [Team-Einrichtung](docs/TEAM_DEVELOPMENT.md). Erst nach genehmigtem Commit/Push abrufbar.

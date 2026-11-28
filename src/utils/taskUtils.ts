@@ -47,9 +47,9 @@ export function resolveSubmissionStatus(
   submission: RawStudentSubmission | undefined,
   dueDate: Date | null,
 ): SubmissionStatus {
-  if (!dueDate) return 'sem_data';
   const state = submission?.state;
   if (state === 'TURNED_IN' || state === 'RETURNED') return 'entregue';
+  if (!dueDate) return 'sem_data';
   const now = new Date();
   if (dueDate < now) return 'atrasado';
   return 'pendente';
@@ -65,7 +65,7 @@ export function normalizeCourseWork(
   const dueDate = buildDueDate(raw.dueDate, raw.dueTime);
   const status = resolveSubmissionStatus(submission, dueDate);
   return {
-    id: raw.id ?? `${course.id}-${Math.random()}`,
+    id: `classroom:${encodeURIComponent(course.id)}:task:${encodeURIComponent(raw.id ?? crypto.randomUUID())}`,
     type: 'tarefa',
     title: raw.title ?? 'Sem título',
     description: truncateDescription(raw.description, 200),
@@ -92,9 +92,10 @@ export function normalizeAnnouncement(
   const lowerText = text.toLowerCase();
   const highlighted = ANNOUNCEMENT_KEYWORDS.some((keyword) => lowerText.includes(keyword));
   return {
-    id: raw.id ?? `${course.id}-anuncio-${Math.random()}`,
+    id: `classroom:${encodeURIComponent(course.id)}:announcement:${encodeURIComponent(raw.id ?? crypto.randomUUID())}`,
     type: 'anuncio',
-    text: truncateDescription(text, 300),
+    // Keep original text for extraction; truncate only for visual presentation.
+    text,
     courseId: course.id,
     courseName: course.name,
     teacherName,

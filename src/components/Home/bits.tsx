@@ -1,47 +1,42 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useReducedMotion } from 'motion/react';
 
-const reduceMotion = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-/** Número que sobe de 0 até `value` (padrão React Bits, mas em rAF puro, sem dependência). */
+/** Upstream number animation with live reduced-motion support and stable frame cleanup. */
 export function CountUp({ value, duration = 700, className }: { value: number; duration?: number; className?: string }) {
-  const [n, setN] = useState(reduceMotion() ? value : 0);
-  const ref = useRef(0);
+  const reduced = useReducedMotion();
+  const [number, setNumber] = useState(value);
+  const current = useRef(value);
   useEffect(() => {
-    if (reduceMotion()) { setN(value); return; }
-    const from = ref.current;
+    if (reduced || duration <= 0) { current.current = value; return; }
+    const from = current.current;
     const start = performance.now();
-    let raf = 0;
-    const tick = (t: number) => {
-      const p = Math.min(1, (t - start) / duration);
-      const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
-      setN(Math.round(from + (value - from) * eased));
-      if (p < 1) raf = requestAnimationFrame(tick);
-      else ref.current = value;
+    let frame = 0;
+    const tick = (time: number) => {
+      const progress = Math.min(1, Math.max(0, (time - start) / duration));
+      const next = Math.round(from + (value - from) * (1 - Math.pow(1 - progress, 3)));
+      current.current = next;
+      setNumber(next);
+      if (progress < 1) frame = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [value, duration]);
-  return <span className={className}>{n}</span>;
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [value, duration, reduced]);
+  return <span className={className} aria-label={String(value)}>{reduced || duration <= 0 ? value : number}</span>;
 }
 
-/** Anel de progresso em SVG; o arco cresce ao montar (CSS transition no stroke-dashoffset). */
-export function ProgressRing({ value, size = 56, stroke = 5, children }: { value: number; size?: number; stroke?: number; children?: React.ReactNode }) {
-  const [shown, setShown] = useState(0);
-  const r = (size - stroke) / 2;
-  const circ = 2 * Math.PI * r;
-  useEffect(() => {
-    if (reduceMotion()) { setShown(value); return; }
-    const id = requestAnimationFrame(() => setShown(value)); // um frame depois para a transição rodar
-    return () => cancelAnimationFrame(id);
-  }, [value]);
+/** SVG progress design from upstream; text always exposes the final accessible value. */
+export function ProgressRing({ value, children }: { value: number; children: ReactNode }) {
+  const percent = Math.round(Math.min(1, Math.max(0, value)) * 100);
+  const radius = 29.5;
+  const circumference = 2 * Math.PI * radius;
   return (
-    <span className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="currentColor" strokeWidth={stroke} className="text-borda" />
-        <circle
-          cx={size / 2} cy={size / 2} r={r} fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round"
-          className="text-primaria" style={{ strokeDasharray: circ, strokeDashoffset: circ * (1 - shown), transition: 'stroke-dashoffset .7s cubic-bezier(.22,1,.36,1)' }}
-        />
+    <span className="relative inline-flex h-16 w-16 shrink-0 items-center justify-center" role="progressbar"
+      aria-label="Progresso de hoje" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}>
+      <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true" className="-rotate-90">
+        <circle cx="32" cy="32" r={radius} fill="none" stroke="currentColor" strokeWidth="5" className="text-borda" />
+        <circle cx="32" cy="32" r={radius} fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round"
+          className="text-primaria motion-safe:transition-[stroke-dashoffset] motion-safe:duration-700"
+          style={{ strokeDasharray: circumference, strokeDashoffset: circumference * (1 - percent / 100) }} />
       </svg>
       <span className="absolute inset-0 flex items-center justify-center">{children}</span>
     </span>

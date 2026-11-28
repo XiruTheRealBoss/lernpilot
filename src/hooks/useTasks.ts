@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { profileStorage } from '../infrastructure/profileStorage';
 import type { NormalizedTask, TaskFilters, ViewMode } from '../types';
 
 interface TasksState {
@@ -49,7 +50,7 @@ export const useTasksStore = create<TasksState>()(
       darkMode: false,
       toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
     }),
-    { name: 'lernpilot_state' },
+    { name: 'tasks', storage: createJSONStorage(() => profileStorage) },
   ),
 );
 

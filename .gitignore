@@ -2,8 +2,17 @@ node_modules
 dist
 .env
 .env.local
+.env.*
+!.env.example
+.team-chat-room
 *.local
 .DS_Store
 
 .vercel
 *.tsbuildinfo
+
+playwright-report/
+test-results/
+artifacts/
+supabase/.temp/
+supabase/.branches/

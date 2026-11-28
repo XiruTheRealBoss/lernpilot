@@ -7,7 +7,7 @@ export function LoginButton({ onLogin }: LoginButtonProps) {
   return (
     <div className="flex flex-col items-center justify-center py-10 text-center">
       <div className="bg-card rounded-card shadow-card p-10 max-w-md w-full">
-        <h2 className="font-display text-2xl font-semibold text-texto mb-2">Conectar o Classroom</h2>
+        <h2 className="text-xl font-bold text-texto mb-2">Conectar o Classroom</h2>
         <p className="text-texto-suave mb-8">
           Conecte sua conta do Google Classroom para ver todas as lições e avisos por prioridade. É opcional: provas, professores e notas funcionam sem isso.
         </p>

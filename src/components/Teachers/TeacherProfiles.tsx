@@ -10,6 +10,7 @@ export function TeacherProfiles({ profiles }: { profiles: TeacherProfile[] }) {
 
   return (
     <div className="space-y-4">
+      <h2 className="font-bold">Professores</h2>
       <form
         className="flex gap-2 max-w-xl"
         onSubmit={(e) => {
@@ -22,7 +23,7 @@ export function TeacherProfiles({ profiles }: { profiles: TeacherProfile[] }) {
         <button className="text-sm font-semibold text-white bg-primaria hover:bg-primaria/90 rounded-lg px-4 whitespace-nowrap">Adicionar</button>
       </form>
       {profiles.length === 0 ? (
-        <p className="text-center text-texto-suave py-12">Adicione um professor ou conecte o Classroom na aba Lições.</p>
+        <p className="text-center text-texto-suave py-12">Adicione um professor fictício para testar.</p>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {profiles.map((p) => (

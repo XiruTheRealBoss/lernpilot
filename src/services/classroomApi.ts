@@ -5,6 +5,7 @@ import type {
   RawStudentSubmission,
   RawUserProfile,
 } from '../types';
+import { assertExternalAccessAllowed } from '../infrastructure/runtime';
 
 const API_BASE = 'https://classroom.googleapis.com/v1';
 
@@ -20,8 +21,16 @@ export class ClassroomApiError extends Error {
 
 const MAX_RETRIES = 3;
 
+// A void-returning boundary retains type-checking of the dormant adapter below.
+// The implementation still always throws; no environment flag can enable access.
+function requireLiveClassroomAccess(): void {
+  assertExternalAccessAllowed();
+}
+
 /** Faz uma chamada autenticada à Classroom API com retry exponencial para erros de rede. */
 async function fetchFromClassroom<T>(path: string, accessToken: string, params?: Record<string, string>): Promise<T> {
+  // Phase 1 is deliberately offline, including direct calls to the retained adapter.
+  requireLiveClassroomAccess();
   const url = new URL(`${API_BASE}${path}`);
   if (params) {
     for (const [key, value] of Object.entries(params)) {
@@ -121,23 +130,15 @@ export async function fetchStudentSubmission(
   courseWorkId: string,
   accessToken: string,
 ): Promise<RawStudentSubmission | undefined> {
-  try {
-    const data = await fetchFromClassroom<{ studentSubmissions?: RawStudentSubmission[] }>(
-      `/courses/${courseId}/courseWork/${courseWorkId}/studentSubmissions`,
-      accessToken,
-      { userId: 'me' },
-    );
-    return data.studentSubmissions?.[0];
-  } catch {
-    return undefined;
-  }
+  const data = await fetchFromClassroom<{ studentSubmissions?: RawStudentSubmission[] }>(
+    `/courses/${courseId}/courseWork/${courseWorkId}/studentSubmissions`,
+    accessToken,
+    { userId: 'me' },
+  );
+  return data.studentSubmissions?.[0];
 }
 
 /** Busca o perfil de um usuário (usado para resolver o nome da professora a partir de creatorUserId). */
 export async function fetchUserProfile(userId: string, accessToken: string): Promise<RawUserProfile | undefined> {
-  try {
-    return await fetchFromClassroom<RawUserProfile>(`/userProfiles/${userId}`, accessToken);
-  } catch {
-    return undefined;
-  }
+  return fetchFromClassroom<RawUserProfile>(`/userProfiles/${userId}`, accessToken);
 }

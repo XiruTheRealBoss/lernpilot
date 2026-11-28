@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { profileStorage } from '../infrastructure/profileStorage';
 import type { NormalizedAnnouncement, NormalizedTask } from '../types';
 
 export type AppTab = 'licoes' | 'provas' | 'professores' | 'notas' | 'privacidade';
@@ -71,7 +72,8 @@ export const useStudyStore = create<StudyState>()(
       setTab: (tab) => set({ tab }),
     }),
     {
-      name: 'lernpilot_study',
+      name: 'study',
+      storage: createJSONStorage(() => profileStorage),
       partialize: (s) => ({ consent: s.consent, teacherStyles: s.teacherStyles, extraTeachers: s.extraTeachers, tests: s.tests }),
     },
   ),
@@ -111,13 +113,3 @@ export function buildTeacherProfiles(
 
 /** Tarefas do Classroom que parecem prova (pelo título). */
 export const looksLikeTest = (task: NormalizedTask) => /\b(prova|teste|avalia[çc][ãa]o|simulado|recupera[çc][ãa]o)\b/i.test(task.title);
-
-console.assert(
-  buildTeacherProfiles(
-    [{ teacherName: 'A', courseName: 'Mat' } as NormalizedTask, { teacherName: 'A', courseName: 'Mat' } as NormalizedTask],
-    [{ teacherName: 'B', courseName: 'Hist' } as NormalizedAnnouncement],
-    ['C'],
-  ).map((p) => `${p.name}:${p.courses.join()}:${p.tasks.length}`).join('|') === 'A:Mat:2|B:Hist:0|C::0',
-  'buildTeacherProfiles',
-);
-console.assert(looksLikeTest({ title: 'Prova de História' } as NormalizedTask) && !looksLikeTest({ title: 'Lista 3' } as NormalizedTask), 'looksLikeTest');

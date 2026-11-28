@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { validDateInput } from '../../infrastructure/storageValidation';
 import type { NormalizedTask } from '../../types';
 import { getDaysRemaining } from '../../utils/dateUtils';
 import { looksLikeTest, useStudyStore, type TestEvent } from '../../hooks/useStudy';
@@ -52,7 +53,7 @@ export function TestPrep({ tasks, teachers }: { tasks: NormalizedTask[]; teacher
         </div>
       )}
 
-      {editing && <TestForm test={editing} teachers={teachers} onDone={(t) => { if (t) saveTest(t); setEditing(null); }} />}
+      {editing && <TestForm key={editing.id} test={editing} teachers={teachers} onDone={(t) => { if (t) saveTest(t); setEditing(null); }} />}
 
       {sorted.length === 0 && !editing ? (
         <p className="text-center text-texto-suave py-8">Nenhuma prova marcada ainda.</p>
@@ -65,6 +66,7 @@ export function TestPrep({ tasks, teachers }: { tasks: NormalizedTask[]; teacher
 
 function TestForm({ test, teachers, onDone }: { test: TestEvent; teachers: string[]; onDone: (t: TestEvent | null) => void }) {
   const [draft, setDraft] = useState(test);
+  const [error, setError] = useState('');
   const [topics, setTopics] = useState(test.topics.map((t) => t.text).join('\n'));
 
   return (
@@ -72,11 +74,13 @@ function TestForm({ test, teachers, onDone }: { test: TestEvent; teachers: strin
       className="bg-card rounded-card shadow-card p-4 space-y-3"
       onSubmit={(e) => {
         e.preventDefault();
+        if (!draft.subject.trim() || !validDateInput(draft.date)) { setError('Informe matéria e data válidas.'); return; }
         const done = new Map(test.topics.map((t) => [t.text, t.done]));
         const list = topics.split('\n').map((s) => s.trim()).filter(Boolean);
-        onDone({ ...draft, topics: list.map((text) => ({ text, done: done.get(text) ?? false })) });
+        onDone({ ...draft, subject: draft.subject.trim(), topics: list.map((text) => ({ text, done: done.get(text) ?? false })) });
       }}
     >
+      <>{error && <p role="alert">{error}</p>}</>
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="text-xs text-texto-suave space-y-1 block">
           <span>Matéria</span>

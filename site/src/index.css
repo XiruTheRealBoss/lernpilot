@@ -1,0 +1,336 @@
+@import 'tailwindcss';
+
+/* School palette: deep blue dominant, orange lines, white details. */
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #020a1c; /* landing / login canvas */
+  --color-navy-950: #04102b;
+  --color-navy-900: #071a44;
+  --color-navy-800: #0b2a63;
+  --color-navy-700: #12398a;
+  --color-blue-600: #1d4ed8;
+  --color-blue-500: #2563eb;
+  --color-blue-400: #4f86f7;
+  --color-blue-300: #8fb4ff;
+  --color-blue-100: #dbe7ff;
+  --color-blue-50: #eef4ff;
+  --color-flame-600: #d9560f;
+  --color-flame-500: #f26b1d;
+  --color-flame-400: #ff8a3d;
+  --color-flame-100: #ffe6d5;
+  --color-paper: #f4f7fc; /* app background */
+  --color-line: #dfe6f2;
+  --color-mute: #5b6b88;
+
+  --radius-card: 18px;
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 12px 32px -18px rgba(7, 26, 68, 0.35);
+  --animate-rise: rise 0.7s cubic-bezier(0.22, 0.7, 0.2, 1) both;
+}
+
+/* `translate`, not `transform`: a filled animation would otherwise pin transform and kill the hover lift */
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+/* Stat tiles arrive one after another, short stagger */
+.grid > .animate-rise:nth-child(2) {
+  animation-delay: 60ms;
+}
+.grid > .animate-rise:nth-child(3) {
+  animation-delay: 120ms;
+}
+.grid > .animate-rise:nth-child(4) {
+  animation-delay: 180ms;
+}
+
+/* Chart marks: grow from the baseline once, when the data first renders */
+.sb-grow-x {
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: sb-grow-x 0.6s cubic-bezier(0.22, 0.7, 0.2, 1) both;
+}
+.sb-grow-y {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: sb-grow-y 0.6s cubic-bezier(0.22, 0.7, 0.2, 1) both;
+}
+.sb-fade {
+  animation: sb-fade 0.35s ease both;
+}
+.sb-draw-line {
+  stroke-dasharray: 1;
+  animation: sb-draw-line 0.9s cubic-bezier(0.22, 0.7, 0.2, 1) both;
+}
+@keyframes sb-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes sb-grow-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+@keyframes sb-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes sb-draw-line {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-paper font-sans text-navy-950;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display tracking-tight;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-flame-500);
+    outline-offset: 2px; /* outline follows each element's own radius; never force one (cards went square on focus) */
+  }
+  ::selection {
+    background: var(--color-flame-500);
+    color: white;
+  }
+}
+
+/* The school's orange lines draw in once */
+.sb-line {
+  stroke-dasharray: 3200; /* > the longest on-screen path (non-scaling stroke measures in screen px) */
+  stroke-dashoffset: 3200;
+  animation: sb-draw 2.4s cubic-bezier(0.65, 0, 0.35, 1) 0.2s forwards;
+}
+@keyframes sb-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* "What is read" card on the landing: bars fill and checks pop once the card is revealed */
+.sb-fill {
+  width: 0;
+}
+.in .sb-fill {
+  animation: sb-fill 0.9s cubic-bezier(0.22, 0.7, 0.2, 1) forwards;
+}
+@keyframes sb-fill {
+  to {
+    width: 100%;
+  }
+}
+.sb-check {
+  opacity: 0;
+  transform: scale(0.6);
+}
+.in .sb-check {
+  animation: sb-pop 0.35s ease forwards;
+}
+@keyframes sb-pop {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Lenis smooth scroll (landing only) */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+/* Staggered reveal from the Ascend reference — hero copy and section heads only */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 0.7, 0.2, 1),
+    transform 0.7s cubic-bezier(0.22, 0.7, 0.2, 1);
+  transition-delay: var(--rd, 0ms);
+}
+/* Boxes (feature cards, facts, panels) arrive more visibly than text: they rise, tip up from their
+   bottom edge and settle with a slight overshoot. Transform and opacity only: they sit over the live canvas. */
+[data-reveal='card'] {
+  transform: perspective(1000px) translateY(72px) rotateX(16deg) scale(0.9);
+  transform-origin: 50% 100%;
+  transition:
+    opacity 0.55s ease-out,
+    transform 0.95s cubic-bezier(0.2, 1.28, 0.3, 1),
+    translate 0.3s ease,
+    border-color 0.3s ease;
+  transition-delay: var(--rd, 0ms), var(--rd, 0ms), 0ms, 0ms;
+}
+[data-reveal].in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Soft dark halo behind copy that floats over the books; transparent at its edges, so it leaves no visible box */
+.halo {
+  background: radial-gradient(50% 50% at 50% 50%, rgb(4 16 43 / 0.82) 0%, rgb(4 16 43 / 0.6) 55%, transparent 100%);
+}
+
+/* Copy floating over the planet stays legible (the Ascend reference's text shadows) */
+.landing h1,
+.landing h2,
+.landing h3,
+.landing p,
+.landing li,
+.landing dd {
+  text-shadow:
+    0 2px 30px rgba(2, 10, 28, 0.75),
+    0 1px 3px rgba(2, 10, 28, 0.55);
+}
+
+/* Frosted glass (login + landing cards) */
+.glass {
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.025));
+  backdrop-filter: blur(34px) saturate(140%);
+  -webkit-backdrop-filter: blur(34px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 30px 80px -20px rgba(0, 0, 0, 0.75);
+}
+.glass-soft {
+  background: rgba(10, 24, 58, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(143, 180, 255, 0.14);
+}
+
+.text-flame-gradient {
+  background: linear-gradient(100deg, #8fb4ff 0%, #ffffff 38%, #ff8a3d 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Primary action: blue → orange, white label */
+.btn-cta {
+  background: linear-gradient(100deg, #1d4ed8 0%, #2563eb 45%, #f26b1d 100%);
+  box-shadow:
+    0 12px 30px -10px rgba(37, 99, 235, 0.65),
+    0 10px 26px -12px rgba(242, 107, 29, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition:
+    transform 0.18s ease,
+    filter 0.2s ease,
+    box-shadow 0.25s ease;
+}
+.btn-cta:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+.btn-cta:active {
+  transform: translateY(1px);
+}
+
+/* Glowing focus field (login) */
+.field {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.field:focus-within {
+  border-color: rgba(79, 134, 247, 0.75);
+  background: rgba(79, 134, 247, 0.07);
+  box-shadow:
+    0 0 0 4px rgba(79, 134, 247, 0.16),
+    0 0 26px -4px rgba(79, 134, 247, 0.6);
+}
+.field input {
+  outline: none;
+}
+/* Browser autofill (the student's own saved login) keeps working, but without Chrome's light box
+   painted inside the dark field */
+.field input:-webkit-autofill,
+.field input:-webkit-autofill:hover,
+.field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff;
+  caret-color: #fff;
+  -webkit-box-shadow: 0 0 0 1000px #0a1630 inset;
+  transition: background-color 9999s ease-out 0s;
+}
+
+/* App cards */
+.card {
+  background: white;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+/* Linked cards: the deeper shadow lives on a pseudo-layer whose opacity fades, so the shadow
+   itself never changes shape mid-transition. Same response for hover and keyboard focus. */
+a.card,
+button.card {
+  position: relative;
+  transition:
+    transform 0.32s cubic-bezier(0.22, 0.7, 0.2, 1),
+    border-color 0.32s ease;
+}
+a.card::after,
+button.card::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  box-shadow: 0 18px 40px -22px rgba(7, 26, 68, 0.45);
+  opacity: 0;
+  transition: opacity 0.32s ease;
+  pointer-events: none;
+}
+a.card:hover,
+button.card:hover,
+a.card:focus-visible,
+button.card:focus-visible {
+  transform: translateY(-2px);
+  border-color: #c7d5ee;
+}
+a.card:hover::after,
+button.card:hover::after,
+a.card:focus-visible::after,
+button.card:focus-visible::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+}
